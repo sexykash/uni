@@ -65,7 +65,7 @@ class Userbot(Client):
         if config.STRING1:
             await self.one.start()
             try:
-                await self.one.join_chat("Life_Codes")
+                await self.one.join_chat("saykkunomusic")
                 await self.one.join_chat(config.SUPPORT_CHANNEL)
             except:
                 pass
@@ -86,7 +86,7 @@ class Userbot(Client):
         if config.STRING2:
             await self.two.start()
             try:
-                await self.two.join_chat("Life_Codes")
+                await self.two.join_chat("saykkunomusic")
                 await self.two.join_chat(config.SUPPORT_CHANNEL)
             except:
                 pass
@@ -107,7 +107,7 @@ class Userbot(Client):
         if config.STRING3:
             await self.three.start()
             try:
-                await self.three.join_chat("Life_Codes")
+                await self.three.join_chat("saykkunomusic")
                 await self.three.join_chat(config.SUPPORT_CHANNEL)
             except:
                 pass
@@ -128,7 +128,7 @@ class Userbot(Client):
         if config.STRING4:
             await self.four.start()
             try:
-                await self.four.join_chat("Life_Codes")
+                await self.four.join_chat("saykkunomusic")
                 await self.four.join_chat(config.SUPPORT_CHANNEL)
             except:
                 pass
@@ -149,7 +149,7 @@ class Userbot(Client):
         if config.STRING5:
             await self.five.start()
             try:
-                await self.five.join_chat("Life_Codes")
+                await self.five.join_chat("saykkunomusic")
                 await self.five.join_chat(config.SUPPORT_CHANNEL)
             except:
                 pass
@@ -170,7 +170,7 @@ class Userbot(Client):
         if config.STRING6:
             await self.six.start()
             try:
-                await self.six.join_chat("Life_Codes")
+                await self.six.join_chat("saykkunomusic")
                 await self.six.join_chat(config.SUPPORT_CHANNEL)
             except:
                 pass
@@ -191,7 +191,7 @@ class Userbot(Client):
         if config.STRING7:
             await self.seven.start()
             try:
-                await self.seven.join_chat("Life_Codes")
+                await self.seven.join_chat("saykkunomusic")
                 await self.seven.join_chat(config.SUPPORT_CHANNEL)
             except:
                 pass
