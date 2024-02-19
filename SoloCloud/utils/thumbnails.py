@@ -21,18 +21,30 @@ def changeImageSize(maxWidth, maxHeight, image):
     newImage = image.resize((newWidth, newHeight))
     return newImage
 
-def add_corners(im):
-    bigsize = (im.size[0] * 3, im.size[1] * 3)
-    mask = Image.new("L", bigsize, 0)
-    ImageDraw.Draw(mask).ellipse((0, 0) + bigsize, fill=255)
-    mask = mask.resize(im.size, Image.LANCZOS)
-    mask = ImageChops.darker(mask, im.split()[-1])
-    im.putalpha(mask)
+def circle(img): 
+     h,w=img.size 
+     a = Image.new('L', [h,w], 0) 
+     b = ImageDraw.Draw(a) 
+     b.pieslice([(0, 0), (h,w)], 0, 360, fill = 255,outline = "white") 
+     c = np.array(img) 
+     d = np.array(a) 
+     e = np.dstack((c, d)) 
+     return Image.fromarray(e)
 
 
-async def get_thumb(videoid, user_id):
+def clear(text):
+    list = text.split(" ")
+    title = ""
+    for i in list:
+        if len(title) + len(i) < 60:
+            title += " " + i
+    return title.strip()
+
+
+async def get_thumb(videoid,user_id):
     if os.path.isfile(f"cache/{videoid}_{user_id}.png"):
         return f"cache/{videoid}_{user_id}.png"
+
     url = f"https://www.youtube.com/watch?v={videoid}"
     try:
         results = VideosSearch(url, limit=1)
@@ -46,16 +58,16 @@ async def get_thumb(videoid, user_id):
             try:
                 duration = result["duration"]
             except:
-                duration = "Unknown"
+                duration = "Unknown Mins"
             thumbnail = result["thumbnails"][0]["url"].split("?")[0]
             try:
-                result["viewCount"]["short"]
+                views = result["viewCount"]["short"]
             except:
-                pass
+                views = "Unknown Views"
             try:
-                result["channel"]["name"]
+                channel = result["channel"]["name"]
             except:
-                pass
+                channel = "Unknown Channel"
 
         async with aiohttp.ClientSession() as session:
             async with session.get(thumbnail) as resp:
@@ -63,98 +75,70 @@ async def get_thumb(videoid, user_id):
                     f = await aiofiles.open(f"cache/thumb{videoid}.png", mode="wb")
                     await f.write(await resp.read())
                     await f.close()
-
         try:
-            wxy = await app.download_media(
-                (await app.get_users(user_id)).photo.big_file_id,
-                file_name=f"{user_id}.jpg",
-            )
+            async for photo in app.get_chat_photos(user_id,1):
+                sp=await app.download_media(photo.file_id, file_name=f'{user_id}.jpg')
         except:
-            wxy = await app.download_media(
-                (await app.get_users(app.id)).photo.big_file_id,
-                file_name=f"{app.id}.jpg",
-            )
+            async for photo in app.get_chat_photos(app.id,1):
+                sp=await app.download_media(photo.file_id, file_name=f'{app.id}.jpg')
 
-        xy = Image.open(wxy)
-        a = Image.new('L', [640, 640], 0)
-        b = ImageDraw.Draw(a)
-        b.pieslice([(0, 0), (640,640)], 0, 360, fill = 255, outline = "white")
-        c = np.array(xy)
-        d = np.array(a)
-        e = np.dstack((c, d))
-        f = Image.fromarray(e)
-        x = f.resize((140, 140))
+        xp=Image.open(sp)
 
         youtube = Image.open(f"cache/thumb{videoid}.png")
-        bg = Image.open(f"SoloCloud/assets/rai.png")
         image1 = changeImageSize(1280, 720, youtube)
         image2 = image1.convert("RGBA")
-        background = image2.filter(filter=ImageFilter.BoxBlur(30))
+        background = image2.filter(filter=ImageFilter.BoxBlur(10))
         enhancer = ImageEnhance.Brightness(background)
-        background = enhancer.enhance(0.6)
-
-        image3 = changeImageSize(1280, 720, bg)
-        image5 = image3.convert("RGBA")
-        Image.alpha_composite(background, image5).save(f"cache/temp{videoid}.png")
-
-        Xcenter = youtube.width / 2
-        Ycenter = youtube.height / 2
-        x1 = Xcenter - 250
-        y1 = Ycenter - 250
-        x2 = Xcenter + 250
-        y2 = Ycenter + 250
-        logo = youtube.crop((x1, y1, x2, y2))
-        logo.thumbnail((485, 485), Image.LANCZOS)
-        logo.save(f"cache/chop{videoid}.png")
-        if not os.path.isfile(f"cache/cropped{videoid}.png"):
-            im = Image.open(f"cache/chop{videoid}.png").convert("RGBA")
-            add_corners(im)
-            im.save(f"cache/cropped{videoid}.png")
-
-        crop_img = Image.open(f"cache/cropped{videoid}.png")
-        logo = crop_img.convert("RGBA")
-        logo.thumbnail((485, 485), Image.LANCZOS)
-        width = int((1280 - 365) / 2)
-        background = Image.open(f"cache/temp{videoid}.png")
-        background.paste(logo, (725, 110), mask=logo)
-        background.paste(x, (1050, 490), mask=x)
-        background.paste(image3, (0, 0), mask=image3)
-
+        background = enhancer.enhance(0.5)
+        y=changeImageSize(200,200,circle(youtube)) 
+        background.paste(y,(45,225),mask=y)
+        a=changeImageSize(200,200,circle(xp)) 
+        background.paste(a,(1045,225),mask=a)
         draw = ImageDraw.Draw(background)
-        font = ImageFont.truetype("SoloCloud/assets/font2.ttf", 45)
-        ImageFont.truetype("SoloCloud/assets/font2.ttf", 70)
-        arial = ImageFont.truetype("SoloCloud/assets/font2.ttf", 30)
-        ImageFont.truetype("SoloCloud/assets/font.ttf", 30)
-        para = textwrap.wrap(title, width=29)
-        j = 0
-        for line in para:
-            if j == 1:
-                j += 1
-                draw.text(
-                    (85, 300),
-                    f"{line}",
-                    fill="white",
-                    stroke_width=1,
-                    stroke_fill="white",
-                    font=font,
-                )
-            if j == 0:
-                j += 1
-                draw.text(
-                    (85, 250),
-                    f"{line}",
-                    fill="white",
-                    stroke_width=1,
-                    stroke_fill="white",
-                    font=font,
-                )
-
+        arial = ImageFont.truetype(""SoloCloudassets/font2.ttf", 30)
+        font = ImageFont.truetype(""SoloCloud/assets/font.ttf", 30)
+        draw.text((1110, 8), unidecode(app.name), fill="white", font=arial)
+        draw.text(
+                (55, 560),
+                f"{channel} | {views[:23]}",
+                (255, 255, 255),
+                font=arial,
+            )
+        draw.text(
+                (57, 600),
+                clear(title),
+                (255, 255, 255),
+                font=font,
+            )
+        draw.line(
+                [(55, 660), (1220, 660)],
+                fill="white",
+                width=5,
+                joint="curve",
+            )
+        draw.ellipse(
+                [(918, 648), (942, 672)],
+                outline="white",
+                fill="white",
+                width=15,
+            )
+        draw.text(
+                (36, 685),
+                "00:00",
+                (255, 255, 255),
+                font=arial,
+            )
+        draw.text(
+                (1185, 685),
+                f"{duration[:23]}",
+                (255, 255, 255),
+                font=arial,
+            )
         try:
             os.remove(f"cache/thumb{videoid}.png")
         except:
             pass
         background.save(f"cache/{videoid}_{user_id}.png")
         return f"cache/{videoid}_{user_id}.png"
-    except Exception as e:
-        print(e)
+    except Exception:
         return YOUTUBE_IMG_URL
