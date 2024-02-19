@@ -5,8 +5,8 @@ import textwrap
 import aiofiles
 import aiohttp
 import numpy as np
+
 from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageFilter, ImageFont
-from unidecode import unidecode
 from youtubesearchpython.__future__ import VideosSearch
 
 from config import YOUTUBE_IMG_URL
@@ -29,18 +29,8 @@ def add_corners(im):
     mask = ImageChops.darker(mask, im.split()[-1])
     im.putalpha(mask)
 
-def circle(img):
-    h,w=img.size
-    a = Image.new('L', [h,w], 0)
-    b = ImageDraw.Draw(a)
-    b.pieslice([(0, 0), (h,w)], 0, 360, fill = 255,outline = "white")
-    c = np.array(img)
-    d = np.array(a)
-    e = np.dstack((c, d))
-    return Image.fromarray(e)
 
-
-async def get_thumb(videoid,user_id):
+async def get_thumb(videoid, user_id):
     if os.path.isfile(f"cache/{videoid}_{user_id}.png"):
         return f"cache/{videoid}_{user_id}.png"
     url = f"https://www.youtube.com/watch?v={videoid}"
@@ -59,12 +49,11 @@ async def get_thumb(videoid,user_id):
                 duration = "Unknown"
             thumbnail = result["thumbnails"][0]["url"].split("?")[0]
             try:
-                views = result["viewCount"]["short"]
+                result["viewCount"]["short"]
             except:
-                views = "Unknown Views"
                 pass
             try:
-                channel = result["channel"]["name"]
+                result["channel"]["name"]
             except:
                 pass
 
@@ -74,26 +63,33 @@ async def get_thumb(videoid,user_id):
                     f = await aiofiles.open(f"cache/thumb{videoid}.png", mode="wb")
                     await f.write(await resp.read())
                     await f.close()
-        
-        
-        # Get user profile pic
-        p=0            
-        try: 
-            async for photo in app.get_chat_photos(user_id,1): 
-                sp=await app.download_media(photo.file_id, file_name=f'{user_id}.jpg')
-                p=1
-            if p==0:
-                raise Exception
-        except: 
-            async for photo in app.get_chat_photos(app.id,1): 
-                sp=await app.download_media(photo.file_id, file_name=f'{app.id}.jpg')
 
-        xp=Image.open(sp)
+        try:
+            wxy = await app.download_media(
+                (await app.get_users(user_id)).photo.big_file_id,
+                file_name=f"{user_id}.jpg",
+            )
+        except:
+            wxy = await app.download_media(
+                (await app.get_users(app.id)).photo.big_file_id,
+                file_name=f"{app.id}.jpg",
+            )
+
+        xy = Image.open(wxy)
+        a = Image.new('L', [640, 640], 0)
+        b = ImageDraw.Draw(a)
+        b.pieslice([(0, 0), (640,640)], 0, 360, fill = 255, outline = "white")
+        c = np.array(xy)
+        d = np.array(a)
+        e = np.dstack((c, d))
+        f = Image.fromarray(e)
+        x = f.resize((140, 140))
+
         youtube = Image.open(f"cache/thumb{videoid}.png")
-        bg = Image.open(f"SoloCloud/assets/thum.png")
+        bg = Image.open(f"SoloCloud/assets/rai.png")
         image1 = changeImageSize(1280, 720, youtube)
         image2 = image1.convert("RGBA")
-        background = image2.filter(filter=ImageFilter.BoxBlur(40))
+        background = image2.filter(filter=ImageFilter.BoxBlur(30))
         enhancer = ImageEnhance.Brightness(background)
         background = enhancer.enhance(0.6)
 
@@ -108,7 +104,7 @@ async def get_thumb(videoid,user_id):
         x2 = Xcenter + 250
         y2 = Ycenter + 250
         logo = youtube.crop((x1, y1, x2, y2))
-        logo.thumbnail((430, 430), Image.LANCZOS)
+        logo.thumbnail((485, 485), Image.LANCZOS)
         logo.save(f"cache/chop{videoid}.png")
         if not os.path.isfile(f"cache/cropped{videoid}.png"):
             im = Image.open(f"cache/chop{videoid}.png").convert("RGBA")
@@ -117,35 +113,25 @@ async def get_thumb(videoid,user_id):
 
         crop_img = Image.open(f"cache/cropped{videoid}.png")
         logo = crop_img.convert("RGBA")
-        logo.thumbnail((430, 430), Image.LANCZOS)
+        logo.thumbnail((485, 485), Image.LANCZOS)
         width = int((1280 - 365) / 2)
         background = Image.open(f"cache/temp{videoid}.png")
-        background.paste(logo, (110, 150), mask=logo)
+        background.paste(logo, (725, 110), mask=logo)
+        background.paste(x, (1050, 490), mask=x)
         background.paste(image3, (0, 0), mask=image3)
-        userImgWidth = 200
-        userImgHeigth = 200
-        x3 =380
-        y3=420
-        x4=x3 + userImgWidth
-        y4=y3 + userImgHeigth
-        x= changeImageSize(userImgWidth,userImgHeigth,circle(xp))
-        background.paste(x, (x3,y3), mask=x)
-        b=ImageDraw.Draw(background)
-        b.pieslice([(x3,y3), (x4,y4)], 0, 360,outline ='white',width=20)
-
 
         draw = ImageDraw.Draw(background)
-        font = ImageFont.truetype("SoloCloud/assets/font.ttf", 45)
+        font = ImageFont.truetype("SoloCloud/assets/font2.ttf", 45)
         ImageFont.truetype("SoloCloud/assets/font2.ttf", 70)
-        arial = ImageFont.truetype("ISoloCloud/assets/font.ttf", 30)
+        arial = ImageFont.truetype("SoloCloud/assets/font2.ttf", 30)
         ImageFont.truetype("SoloCloud/assets/font.ttf", 30)
-        para = textwrap.wrap(title, width=30)
+        para = textwrap.wrap(title, width=29)
         j = 0
         for line in para:
             if j == 1:
                 j += 1
                 draw.text(
-                    (605, 270),
+                    (85, 300),
                     f"{line}",
                     fill="white",
                     stroke_width=1,
@@ -155,19 +141,14 @@ async def get_thumb(videoid,user_id):
             if j == 0:
                 j += 1
                 draw.text(
-                    (605, 220),
+                    (85, 250),
                     f"{line}",
                     fill="white",
                     stroke_width=1,
                     stroke_fill="white",
                     font=font,
                 )
-        draw.text(
-            (605, 340),
-            f"{channel} | {views}",
-            (255, 255, 255),
-            font=arial,
-        )
+
         try:
             os.remove(f"cache/thumb{videoid}.png")
         except:
